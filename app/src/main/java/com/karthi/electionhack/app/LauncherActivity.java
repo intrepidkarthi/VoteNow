@@ -2,6 +2,8 @@ package com.karthi.electionhack.app;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.AsyncTask;
@@ -10,7 +12,12 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.karthi.electionhack.utils.AppConstants;
 import com.karthi.electionhack.utils.GPSTracker;
 import com.karthi.electionhack.utils.ServiceHandler;
@@ -29,6 +36,12 @@ public class LauncherActivity extends Activity {
     double latitude;
     double longitude;
 
+    SharedPreferences sharedPreferences;
+    SharedPreferences.Editor editor;
+
+    // Google Map
+    private GoogleMap googleMap;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +49,32 @@ public class LauncherActivity extends Activity {
         setContentView(R.layout.activity_launcher);
         getDeviceId();
 
+
+        //Initiate shared preferences
+        sharedPreferences = getSharedPreferences("Preferences", Context.MODE_PRIVATE);
+        editor = sharedPreferences.edit();
+        boolean haveWeShownPreferences = sharedPreferences.getBoolean("firstTime", false);
+
+        // create marker
+        MarkerOptions marker = new MarkerOptions().position(new LatLng(latitude, longitude)).title("Your Location ");
+
+
+        if (!haveWeShownPreferences)
+        {
+            //launch the app for the first time
+            //Make API call to neem service
+            new MakeAPICall().execute("createMethod", deviceId, "Bangalore", String.valueOf(latitude), String.valueOf(longitude));
+
+        }
+        else
+        {
+            //opening the app from second time onwards
+           // new MakeAPICall().execute("createPollingStatus", deviceId, "Bangalore", String.valueOf(latitude), String.valueOf(longitude));
+
+        }
+
+        editor.putBoolean("firstTime", true);
+        editor.commit();
 
         // create class object
         gps = new GPSTracker(LauncherActivity.this);
@@ -52,10 +91,43 @@ public class LauncherActivity extends Activity {
             gps.showSettingsAlert();
         }
 
-        //Make API call to neem service
-        new MakeAPICall().execute("createMethod", deviceId, "Bangalore", String.valueOf(latitude), String.valueOf(longitude));
+
+        try {
+            // Loading map
+            initilizeMap();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
 
+
+        // adding marker on the user's current location
+        googleMap.addMarker(marker);
+
+    }
+
+    /**
+     * function to load map. If map is not created it will create it for you
+     * */
+    private void initilizeMap() {
+        if (googleMap == null) {
+            googleMap = ((MapFragment) getFragmentManager().findFragmentById(
+                    R.id.map)).getMap();
+
+            // check if map is created successfully or not
+            if (googleMap == null) {
+                Toast.makeText(getApplicationContext(),
+                        "Sorry! unable to create maps", Toast.LENGTH_SHORT)
+                        .show();
+            }
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        initilizeMap();
     }
 
     private final LocationListener locationListener = new LocationListener() {
