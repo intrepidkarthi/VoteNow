@@ -41,10 +41,10 @@ public class LauncherActivity extends Activity {
         gps = new GPSTracker(LauncherActivity.this);
 
         // check if GPS enabled
-        if(gps.canGetLocation()){
+        if (gps.canGetLocation()) {
             latitude = gps.getLatitude();
             longitude = gps.getLongitude();
-        }else{
+        } else {
 
             // can't get location
             // GPS or Network is not enabled
@@ -52,8 +52,8 @@ public class LauncherActivity extends Activity {
             gps.showSettingsAlert();
         }
 
-        new MakeAPICall().execute("createMethod");
-
+        //Make API call to neem service
+        new MakeAPICall().execute("createMethod", deviceId, "Bangalore", String.valueOf(latitude), String.valueOf(longitude));
 
 
     }
@@ -115,7 +115,7 @@ public class LauncherActivity extends Activity {
 
     /**
      * Async task class to get json by making HTTP call
-     * */
+     */
     private class MakeAPICall extends AsyncTask<String, Void, Void> {
 
         @Override
@@ -130,12 +130,15 @@ public class LauncherActivity extends Activity {
         }
 
         @Override
-        protected Void doInBackground(String... arg0) {
+        protected Void doInBackground(String... params) {
             // Creating service handler class instance
             ServiceHandler sh = new ServiceHandler();
 
             // Making a request to url and getting response
-            String jsonStr = sh.makeServiceCall(AppConstants.SERVER_BASE_URL, ServiceHandler.GET);
+            String jsonStr = sh.makeServiceCall(AppConstants.SERVER_BASE_URL + "&method=" + params[0] + "&name=" + params[1] +
+                    "&address=" + params[2] + "&home_lat=" + latitude + "&home_long=" + longitude + "&polling_booth_lat=" + latitude
+                    + "&polling_booth_long=" + longitude + "&voter_id=" + params[1] + "&format=json"
+                    , ServiceHandler.GET);
 
             Log.d("Response: ", "> " + jsonStr);
 
@@ -166,7 +169,6 @@ public class LauncherActivity extends Activity {
         }
 
     }
-
 
 
 }

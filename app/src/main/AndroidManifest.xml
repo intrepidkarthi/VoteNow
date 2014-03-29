@@ -18,6 +18,7 @@
 
         <activity
             android:name="com.karthi.electionhack.app.LauncherActivity"
+            android:screenOrientation="portrait"
             android:label="@string/app_name"></activity>
         <activity
             android:name="com.karthi.electionhack.app.SplashActivity"
