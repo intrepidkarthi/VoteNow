@@ -9,30 +9,120 @@
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.MapFragment"
         android:layout_width="match_parent"
-        android:layout_height="150dp" />
+        android:layout_height="170dp" />
 
-    <LinearLayout
+
+    <TextView
         android:layout_width="match_parent"
-        android:layout_height="1dp"
+        android:layout_height="wrap_content"
+        android:text="Latest Updates"
+        android:id="@+id/latest_updates"
         android:layout_below="@+id/map"
-        android:background="#cccccc"></LinearLayout>
+        android:gravity="center"
+        android:padding="5dp"
+        android:background="#cccccc"
+        android:textColor="#000"
+
+        />
+
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_below="@+id/latest_updates"
+        android:gravity="center"
+        android:padding="10dp"
         android:background="#cccccc"
+        android:orientation="vertical"
+        android:id="@+id/latestupdatescontainer"
+        android:textColor="#000">
+
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="There are almost 20 people standing on the queue for voting. Make your vote right now! Hurry up!"
+            android:id="@+id/latest_info"
+            android:layout_below="@+id/map"
+            android:gravity="center"
+            android:padding="5dp"
+            android:background="#cccccc"
+            android:textColor="#000"
+            android:textSize="18sp" />
+
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="left"
+            android:padding="5dp"
+            android:textColor="#999999"
+            android:textSize="15sp"
+            android:id="@+id/latest_update_time"
+            android:layout_below="@+id/latest_info"
+            android:text="updated 1 hour ago..." />
+
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/latestupdatescontainer"
+        android:padding="10dp"
+        android:gravity="center"
+        android:text="Today is the only day where you can prove that you are a responsible citizen of this country! Vote right now if you need a change!"
+
+        ></TextView>
+
+
+
+    <LinearLayout
+        android:id="@+id/LinearLayout01"
+        android:layout_height="wrap_content"
+        android:layout_width="fill_parent"
+        android:padding="5dp"
+        android:layout_above="@+id/LinearLayout02"
         >
 
+        <Button
+            android:id="@+id/updateButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Update Info"></Button>
+
+        <Button
+            android:id="@+id/votedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Already Voted!"></Button>
+    </LinearLayout>
 
 
+    <LinearLayout
+        android:id="@+id/LinearLayout02"
+        android:layout_height="wrap_content"
+        android:layout_width="fill_parent"
+        android:padding="5dp"
 
+        android:layout_alignParentBottom="true">
 
+        <Button
+            android:id="@+id/surveyButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Take Survey"></Button>
 
-        </LinearLayout>
-
-
-
-
+        <Button
+            android:id="@+id/shareButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Share"></Button>
+    </LinearLayout>
 
 
 </RelativeLayout>
