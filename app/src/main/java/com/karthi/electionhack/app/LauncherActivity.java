@@ -1,6 +1,8 @@
 package com.karthi.electionhack.app;
 
 import android.app.Activity;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -9,7 +11,9 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.Settings.Secure;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -51,6 +55,7 @@ public class LauncherActivity extends Activity {
     GoogleMap googleMap;
     CameraPosition cameraPosition;
     MarkerOptions marker;
+
 
 
     //Hardcoded lat, lan values
@@ -153,6 +158,40 @@ public class LauncherActivity extends Activity {
             }
         });
 
+
+        new Handler().postDelayed(new Runnable(){
+            @Override
+            public void run() {
+                /* Create an Intent that will start the Menu-Activity. */
+//                Intent mainIntent = new Intent(LauncherActivity.this, BoothActivity.class);
+//                LauncherActivity.this.startActivity(mainIntent);
+//                LauncherActivity.this.finish();
+
+
+                NotificationCompat.Builder builder =
+                        new NotificationCompat.Builder(LauncherActivity.this)
+                                .setSmallIcon(R.drawable.ic_launcher)
+                                .setTicker("Time to vote!")
+                                .setContentTitle("Update on your polling booth")
+                                .setContentText("The crowd seems to be less on your polling booth. You can start from your home now");
+
+                Intent notificationIntent = new Intent(LauncherActivity.this, BoothActivity.class);
+                PendingIntent contentIntent = PendingIntent.getActivity(LauncherActivity.this, 0, notificationIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT);
+                builder.setContentIntent(contentIntent);
+
+                // Add as notification
+                NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                manager.notify(1, builder.build());
+
+
+
+            }
+        }, 3000);
+
+
+
+
     }
 
     /**
@@ -214,6 +253,7 @@ public class LauncherActivity extends Activity {
             //System.out.println("network "+"on provider disabled"+ s);
         }
     };
+
 
 
     public String getDeviceId() {
@@ -297,7 +337,7 @@ public class LauncherActivity extends Activity {
             // Dismiss the progress dialog
             if (pDialog.isShowing())
                 pDialog.dismiss();
-          
+
         }
 
     }

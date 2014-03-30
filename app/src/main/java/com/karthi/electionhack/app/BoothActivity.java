@@ -67,6 +67,9 @@ public class BoothActivity extends Activity {
 
 
 
+// and this
+
+
 
     }
 
