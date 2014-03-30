@@ -5,5 +5,9 @@
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Clear Booth</string>
     <string name="title_activity_splash">Vote Now!</string>
-
+    <string name="response_yes">Yes</string>
+    <string name="response_no">No</string>
+    <string name="response_maybe">Maybe</string>
+    <string name="title_activity_fourth_question">FourthQuestionActivity</string>
+    <string name="title_activity_fifth_question_fragment">FifthQuestionFragment</string>
 </resources>

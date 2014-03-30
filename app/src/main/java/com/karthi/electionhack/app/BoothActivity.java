@@ -48,7 +48,7 @@ public class BoothActivity extends Activity {
     final Context context = this;
     private Button button;
     private EditText result;
-    TextView latestInfo;
+    TextView latestInfo, latest_update_time;
 
 
     @Override
@@ -64,6 +64,7 @@ public class BoothActivity extends Activity {
         surveyButton = (Button) findViewById(R.id.surveyButton);
         shareButton = (Button) findViewById(R.id.shareButton);
         latestInfo = (TextView) findViewById(R.id.latest_info);
+        latest_update_time = (TextView) findViewById(R.id.latest_update_time);
 
         // create marker
         marker = new MarkerOptions().position(new LatLng(latitude, longitude)).title("Your Booth Location ");
@@ -127,7 +128,7 @@ public class BoothActivity extends Activity {
                                         int totalUsers = Integer.parseInt(userInput.getText().toString())+randomNumber;
 
                                       latestInfo.setText(  "There are approximately "+totalUsers+" people standing on the queue for voting. Make your vote right now! Hurry up!");
-
+                                        latest_update_time.setText("Updated a few seconds ago!");
 
 
                                     }
@@ -178,6 +179,10 @@ public class BoothActivity extends Activity {
         surveyButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                Intent i = new Intent (BoothActivity.this, SurveyActivity.class);
+                startActivity(i);
+                overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
 
             }
         });
