@@ -3,20 +3,27 @@ package com.karthi.electionhack.app;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.provider.Settings;
+import android.provider.Settings.Secure;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.karthi.electionhack.utils.AppConstants;
 import com.karthi.electionhack.utils.GPSTracker;
@@ -29,6 +36,7 @@ public class LauncherActivity extends Activity {
 
     //Variable declarations
     String deviceId;
+    RelativeLayout bottomLayout;
     // GPSTracker class
     GPSTracker gps;
 
@@ -41,6 +49,14 @@ public class LauncherActivity extends Activity {
 
     // Google Map
     private GoogleMap googleMap;
+    CameraPosition cameraPosition;
+    MarkerOptions marker;
+
+
+    //Hardcoded lat, lan values
+    double[] latitudes_array = new double[]{13.08532, 13.09706, 13.19854, 12.92263, 13.13436 };
+    double[] longitudes_array = new double[]{77.55364, 77.81748, 77.69942, 77.60779, 77.39919 };
+    String[] titleArray = new String[]{"Govt Higher Primary School, Jalahalli,Yelahanka", "Govt. Higher Primary School - 10, Hosakote", "Govt, Lower Primary School, Kote", "Anganawadi A kendra, Anekal", "Government Higher Primary School, Mylanahalli"};
 
 
     @Override
@@ -49,32 +65,16 @@ public class LauncherActivity extends Activity {
         setContentView(R.layout.activity_launcher);
         getDeviceId();
 
+        System.out.println("Response device id "+deviceId);
+
+        bottomLayout = (RelativeLayout) findViewById(R.id.bottomLayout);
+
 
         //Initiate shared preferences
         sharedPreferences = getSharedPreferences("Preferences", Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
         boolean haveWeShownPreferences = sharedPreferences.getBoolean("firstTime", false);
 
-        // create marker
-        MarkerOptions marker = new MarkerOptions().position(new LatLng(latitude, longitude)).title("Your Location ");
-
-
-        if (!haveWeShownPreferences)
-        {
-            //launch the app for the first time
-            //Make API call to neem service
-            new MakeAPICall().execute("createMethod", deviceId, "Bangalore", String.valueOf(latitude), String.valueOf(longitude));
-
-        }
-        else
-        {
-            //opening the app from second time onwards
-           // new MakeAPICall().execute("createPollingStatus", deviceId, "Bangalore", String.valueOf(latitude), String.valueOf(longitude));
-
-        }
-
-        editor.putBoolean("firstTime", true);
-        editor.commit();
 
         // create class object
         gps = new GPSTracker(LauncherActivity.this);
@@ -92,6 +92,29 @@ public class LauncherActivity extends Activity {
         }
 
 
+
+        if (!haveWeShownPreferences)
+        {
+            //launch the app for the first time
+            //Make API call to neem service
+            new MakeAPICall().execute("createMethod", deviceId, "Bangalore", String.valueOf(latitude), String.valueOf(longitude), "2");
+
+        }
+        else
+        {
+            //opening the app from second time onwards
+            // new MakeAPICall().execute("createPollingStatus", deviceId, "Bangalore", String.valueOf(latitude), String.valueOf(longitude));
+
+        }
+
+        editor.putBoolean("firstTime", true);
+        editor.commit();
+
+
+        // create marker
+        marker = new MarkerOptions().position(new LatLng(latitude, longitude)).title("Your Location ");
+
+
         try {
             // Loading map
             initilizeMap();
@@ -102,8 +125,46 @@ public class LauncherActivity extends Activity {
 
 
 
-        // adding marker on the user's current location
-        googleMap.addMarker(marker);
+
+        googleMap.getUiSettings().setMyLocationButtonEnabled(true);
+
+
+        //Setting polling booths around.
+        //Hard coding right now :(
+
+
+        for(int i= 0 ; i<5; i++)
+        {
+            marker = new MarkerOptions().position(new LatLng(latitudes_array[i], longitudes_array[i])).title(titleArray[i]);
+
+
+            // GREEN color icon
+            marker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+            googleMap.addMarker(marker);
+
+
+        }
+
+
+        cameraPosition = new CameraPosition.Builder().target(
+                new LatLng(latitude, longitude)).zoom(10).build();
+        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+
+        googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                //marker.setTitle();
+
+                bottomLayout.setVisibility(View.GONE);
+                Toast.makeText(getApplicationContext(), "Thanks for choosing your booth!", Toast.LENGTH_LONG).show();
+
+                Intent newIntent = new Intent(LauncherActivity.this, BoothActivity.class );
+
+
+                return false;
+            }
+        });
 
     }
 
@@ -114,6 +175,9 @@ public class LauncherActivity extends Activity {
         if (googleMap == null) {
             googleMap = ((MapFragment) getFragmentManager().findFragmentById(
                     R.id.map)).getMap();
+            // adding marker on the user's current location
+            googleMap.addMarker(marker);
+
 
             // check if map is created successfully or not
             if (googleMap == null) {
@@ -134,6 +198,18 @@ public class LauncherActivity extends Activity {
         public void onLocationChanged(Location location) {
             longitude = location.getLongitude();
             latitude = location.getLatitude();
+
+
+            // create marker
+            marker = new MarkerOptions().position(new LatLng(latitude, longitude)).title("Your Location ");
+
+
+            cameraPosition = new CameraPosition.Builder().target(
+                    new LatLng(latitude, longitude)).zoom(12).build();
+
+            googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+
         }
 
         @Override
@@ -154,10 +230,10 @@ public class LauncherActivity extends Activity {
 
 
     public String getDeviceId() {
-        String deviceId;
+        
         try {
-            deviceId = Settings.System.getString(getContentResolver(),
-                    Settings.System.ANDROID_ID);
+            deviceId = Secure.getString(getApplicationContext().getContentResolver(),
+                    Secure.ANDROID_ID);
         } catch (Exception e) {
             return null;
         }
@@ -208,8 +284,7 @@ public class LauncherActivity extends Activity {
 
             // Making a request to url and getting response
             String jsonStr = sh.makeServiceCall(AppConstants.SERVER_BASE_URL + "&method=" + params[0] + "&name=" + params[1] +
-                    "&address=" + params[2] + "&home_lat=" + latitude + "&home_long=" + longitude + "&polling_booth_lat=" + latitude
-                    + "&polling_booth_long=" + longitude + "&voter_id=" + params[1] + "&format=json"
+                    "&home_lat=" + latitude + "&home_long=" + longitude  +"&booth_id=" + params[5]+ "&format=json"
                     , ServiceHandler.GET);
 
             Log.d("Response: ", "> " + jsonStr);
