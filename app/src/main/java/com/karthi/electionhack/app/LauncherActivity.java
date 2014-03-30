@@ -29,14 +29,18 @@ import com.karthi.electionhack.utils.AppConstants;
 import com.karthi.electionhack.utils.GPSTracker;
 import com.karthi.electionhack.utils.ServiceHandler;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.HashMap;
 
 public class LauncherActivity extends Activity {
 
     //Variable declarations
     String deviceId;
     RelativeLayout bottomLayout;
+    String myBoothId = null;
     // GPSTracker class
     GPSTracker gps;
 
@@ -50,14 +54,10 @@ public class LauncherActivity extends Activity {
     // Google Map
     GoogleMap googleMap;
     CameraPosition cameraPosition;
-    MarkerOptions marker;
 
-
-    //Hardcoded lat, lan values
-    double[] latitudes_array = new double[]{13.08532, 13.09706, 13.19854, 12.92263, 13.13436};
-    double[] longitudes_array = new double[]{77.55364, 77.81748, 77.69942, 77.60779, 77.39919};
-    String[] titleArray = new String[]{"Govt Higher Primary School, Jalahalli,Yelahanka", "Govt. Higher Primary School - 10, Hosakote", "Govt, Lower Primary School, Kote", "Anganawadi A kendra, Anekal", "Government Higher Primary School, Mylanahalli"};
-
+    JSONArray booths;
+    HashMap<Marker, String> markers;
+    MarkerOptions myLocationMarker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,8 +69,7 @@ public class LauncherActivity extends Activity {
         //Initiate shared preferences
         sharedPreferences = getSharedPreferences("Preferences", Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
-        boolean haveWeShownPreferences = sharedPreferences.getBoolean("firstTime", false);
-
+        myBoothId = sharedPreferences.getString("boothId", null);
 
         // create class object
         gps = new GPSTracker(LauncherActivity.this);
@@ -97,13 +96,8 @@ public class LauncherActivity extends Activity {
 //
 //        }
 
-        editor.putBoolean("firstTime", true);
-        editor.commit();
-
-
         // create marker
-        marker = new MarkerOptions().position(new LatLng(latitude, longitude)).title("Your Location ");
-
+        myLocationMarker = new MarkerOptions().position(new LatLng(latitude, longitude)).title("Your Location ");
 
         try {
             // Loading map
@@ -116,35 +110,24 @@ public class LauncherActivity extends Activity {
 
         googleMap.getUiSettings().setMyLocationButtonEnabled(true);
 
-
-        //Setting polling booths around.
-        //Hard coding right now :(
-
-
-        for (int i = 0; i < 5; i++) {
-            marker = new MarkerOptions().position(new LatLng(latitudes_array[i], longitudes_array[i])).title(titleArray[i]);
-
-            // GREEN color icon
-            marker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-            googleMap.addMarker(marker);
-
-
-        }
-
-
         cameraPosition = new CameraPosition.Builder().target(
                 new LatLng(latitude, longitude)).zoom(10).build();
         googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-
 
         googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
 
                 //Make API call to neem service. Currently marker value hardcoded
-                new MakeAPICall().execute("createPerson", deviceId, "Bangalore", String.valueOf(latitude), String.valueOf(longitude), "2");
+                String boothId = markers.get(marker);
+                new UpdateBoothId().execute("createPerson", deviceId, "Bangalore", String.valueOf(latitude), String.valueOf(longitude), boothId);
                 bottomLayout.setVisibility(View.GONE);
                 Toast.makeText(getApplicationContext(), "Thanks for choosing your booth!", Toast.LENGTH_LONG).show();
+
+                editor = sharedPreferences.edit();
+                editor.putString("boothId", boothId);
+                editor.commit();
+
                 //Calling booth activity
                 Intent newIntent = new Intent(LauncherActivity.this, BoothActivity.class);
                 startActivity(newIntent);
@@ -152,6 +135,15 @@ public class LauncherActivity extends Activity {
                 return false;
             }
         });
+
+        new FetchNearbyBooths().execute();
+
+        if (myBoothId != null) {
+            //Calling booth activity
+            Intent newIntent = new Intent(LauncherActivity.this, BoothActivity.class);
+            startActivity(newIntent);
+            overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
+        }
 
     }
 
@@ -163,8 +155,7 @@ public class LauncherActivity extends Activity {
             googleMap = ((MapFragment) getFragmentManager().findFragmentById(
                     R.id.map)).getMap();
             // adding marker on the user's current location
-            googleMap.addMarker(marker);
-
+            googleMap.addMarker(myLocationMarker);
 
             // check if map is created successfully or not
             if (googleMap == null) {
@@ -188,7 +179,7 @@ public class LauncherActivity extends Activity {
 
 
             // create marker
-            marker = new MarkerOptions().position(new LatLng(latitude, longitude)).title("Your Location ");
+            MarkerOptions marker = new MarkerOptions().position(new LatLng(latitude, longitude)).title("Your Location ");
 
 
             cameraPosition = new CameraPosition.Builder().target(
@@ -242,6 +233,9 @@ public class LauncherActivity extends Activity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.action_settings) {
+            editor = sharedPreferences.edit();
+            editor.remove("boothId");
+            editor.commit();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -251,7 +245,7 @@ public class LauncherActivity extends Activity {
     /**
      * Async task class to get json by making HTTP call
      */
-    private class MakeAPICall extends AsyncTask<String, Void, Void> {
+    private class UpdateBoothId extends AsyncTask<String, Void, Void> {
 
         @Override
         protected void onPreExecute() {
@@ -280,12 +274,76 @@ public class LauncherActivity extends Activity {
                 try {
                     JSONObject jsonObj = new JSONObject(jsonStr);
 
-
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
             } else {
                 Log.e("ServiceHandler", "Couldn't get any data from the url");
+            }
+
+            return null;
+        }
+    }
+
+    private class FetchNearbyBooths extends AsyncTask<String, Void, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            // Showing progress dialog
+            pDialog = new ProgressDialog(LauncherActivity.this);
+            pDialog.setMessage("Please wait...");
+            pDialog.setCancelable(false);
+            pDialog.show();
+        }
+
+        @Override
+        protected Void doInBackground(String... params) {
+            // Creating service handler class instance
+            ServiceHandler sh = new ServiceHandler();
+
+            // Making a request to url and getting response
+            String jsonStr = sh.makeServiceCall(AppConstants.SERVER_BASE_URL + "&method=fetchAllPollingBooths" +
+                    "&my_lat=" + latitude + "&my_long=" + longitude + "&format=json"
+                    , ServiceHandler.GET);
+            Log.d("Response: ", "> " + jsonStr);
+
+            if (jsonStr != null) {
+                try {
+                    JSONObject jsonObj = new JSONObject(jsonStr);
+                    booths = (JSONArray) jsonObj.get("Result");
+
+                    LauncherActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                markers = new HashMap<Marker, String>();
+
+                                for (int i = 0; i < booths.length(); i++) {
+                                    JSONObject booth = (JSONObject) booths.get(i);
+                                    String boothId = booth.getString("name");
+                                    double poll_lat = Double.parseDouble(booth.getString("poll_lat"));
+                                    double poll_long = Double.parseDouble(booth.getString("poll_long"));
+                                    String poll_address = booth.getString("address");
+
+                                    MarkerOptions markerOpts = new MarkerOptions().position(new LatLng(poll_lat, poll_long)).title(poll_address);
+
+                                    // GREEN color icon
+                                    markerOpts.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+                                    Marker m = googleMap.addMarker(markerOpts);
+                                    markers.put(m, boothId);
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                    Log.e("ServiceHandler", "Couldn't get any data from the url");
             }
 
             return null;
