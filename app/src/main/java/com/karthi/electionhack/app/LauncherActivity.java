@@ -48,14 +48,14 @@ public class LauncherActivity extends Activity {
     SharedPreferences.Editor editor;
 
     // Google Map
-    private GoogleMap googleMap;
+    GoogleMap googleMap;
     CameraPosition cameraPosition;
     MarkerOptions marker;
 
 
     //Hardcoded lat, lan values
-    double[] latitudes_array = new double[]{13.08532, 13.09706, 13.19854, 12.92263, 13.13436 };
-    double[] longitudes_array = new double[]{77.55364, 77.81748, 77.69942, 77.60779, 77.39919 };
+    double[] latitudes_array = new double[]{13.08532, 13.09706, 13.19854, 12.92263, 13.13436};
+    double[] longitudes_array = new double[]{77.55364, 77.81748, 77.69942, 77.60779, 77.39919};
     String[] titleArray = new String[]{"Govt Higher Primary School, Jalahalli,Yelahanka", "Govt. Higher Primary School - 10, Hosakote", "Govt, Lower Primary School, Kote", "Anganawadi A kendra, Anekal", "Government Higher Primary School, Mylanahalli"};
 
 
@@ -65,11 +65,7 @@ public class LauncherActivity extends Activity {
         setContentView(R.layout.activity_launcher);
         getDeviceId();
 
-        System.out.println("Response device id "+deviceId);
-
         bottomLayout = (RelativeLayout) findViewById(R.id.bottomLayout);
-
-
         //Initiate shared preferences
         sharedPreferences = getSharedPreferences("Preferences", Context.MODE_PRIVATE);
         editor = sharedPreferences.edit();
@@ -92,20 +88,14 @@ public class LauncherActivity extends Activity {
         }
 
 
-
-        if (!haveWeShownPreferences)
-        {
-            //launch the app for the first time
-            //Make API call to neem service
-            new MakeAPICall().execute("createMethod", deviceId, "Bangalore", String.valueOf(latitude), String.valueOf(longitude), "2");
-
-        }
-        else
-        {
-            //opening the app from second time onwards
-            // new MakeAPICall().execute("createPollingStatus", deviceId, "Bangalore", String.valueOf(latitude), String.valueOf(longitude));
-
-        }
+//        if (!haveWeShownPreferences) {
+//            //launch the app for the first time
+//
+//        } else {
+//            //opening the app from second time onwards
+//            // new MakeAPICall().execute("createPollingStatus", deviceId, "Bangalore", String.valueOf(latitude), String.valueOf(longitude));
+//
+//        }
 
         editor.putBoolean("firstTime", true);
         editor.commit();
@@ -124,8 +114,6 @@ public class LauncherActivity extends Activity {
         }
 
 
-
-
         googleMap.getUiSettings().setMyLocationButtonEnabled(true);
 
 
@@ -133,10 +121,8 @@ public class LauncherActivity extends Activity {
         //Hard coding right now :(
 
 
-        for(int i= 0 ; i<5; i++)
-        {
+        for (int i = 0; i < 5; i++) {
             marker = new MarkerOptions().position(new LatLng(latitudes_array[i], longitudes_array[i])).title(titleArray[i]);
-
 
             // GREEN color icon
             marker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
@@ -154,14 +140,15 @@ public class LauncherActivity extends Activity {
         googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                //marker.setTitle();
 
+                //Make API call to neem service. Currently marker value hardcoded
+                new MakeAPICall().execute("createPerson", deviceId, "Bangalore", String.valueOf(latitude), String.valueOf(longitude), "2");
                 bottomLayout.setVisibility(View.GONE);
                 Toast.makeText(getApplicationContext(), "Thanks for choosing your booth!", Toast.LENGTH_LONG).show();
-
-                Intent newIntent = new Intent(LauncherActivity.this, BoothActivity.class );
-
-
+                //Calling booth activity
+                Intent newIntent = new Intent(LauncherActivity.this, BoothActivity.class);
+                startActivity(newIntent);
+                overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right);
                 return false;
             }
         });
@@ -170,7 +157,7 @@ public class LauncherActivity extends Activity {
 
     /**
      * function to load map. If map is not created it will create it for you
-     * */
+     */
     private void initilizeMap() {
         if (googleMap == null) {
             googleMap = ((MapFragment) getFragmentManager().findFragmentById(
@@ -230,7 +217,7 @@ public class LauncherActivity extends Activity {
 
 
     public String getDeviceId() {
-        
+
         try {
             deviceId = Secure.getString(getApplicationContext().getContentResolver(),
                     Secure.ANDROID_ID);
@@ -284,7 +271,7 @@ public class LauncherActivity extends Activity {
 
             // Making a request to url and getting response
             String jsonStr = sh.makeServiceCall(AppConstants.SERVER_BASE_URL + "&method=" + params[0] + "&name=" + params[1] +
-                    "&home_lat=" + latitude + "&home_long=" + longitude  +"&booth_id=" + params[5]+ "&format=json"
+                    "&home_lat=" + latitude + "&home_long=" + longitude + "&booth_id=" + params[5] + "&format=json"
                     , ServiceHandler.GET);
 
             Log.d("Response: ", "> " + jsonStr);
@@ -310,9 +297,7 @@ public class LauncherActivity extends Activity {
             // Dismiss the progress dialog
             if (pDialog.isShowing())
                 pDialog.dismiss();
-            /**
-             * Updating parsed JSON data into ListView
-             * */
+          
         }
 
     }

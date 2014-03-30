@@ -3,7 +3,7 @@
     package="com.karthi.electionhack.app">
 
 
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -21,7 +21,6 @@
         android:required="true" />
 
 
-
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
@@ -33,9 +32,16 @@
             android:name="com.karthi.electionhack.app.LauncherActivity"
             android:screenOrientation="portrait"
             android:label="@string/app_name"></activity>
+
+
+        <activity
+            android:name="com.karthi.electionhack.app.BoothActivity"
+            android:screenOrientation="portrait"
+            android:label="@string/app_name"></activity>
         <activity
             android:name="com.karthi.electionhack.app.SplashActivity"
             android:theme="@android:style/Theme.Holo.Light.NoActionBar.Fullscreen"
+            android:screenOrientation="portrait"
             android:label="@string/title_activity_splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -45,7 +51,8 @@
 
         </activity>
 
-        <meta-data android:name="com.google.android.gms.version"
+        <meta-data
+            android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
         <!-- Goolge Maps API Key -->
