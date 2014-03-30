@@ -41,6 +41,7 @@ public class LauncherActivity extends Activity {
     String deviceId;
     RelativeLayout bottomLayout;
     String myBoothId = null;
+    String myRowId;
     // GPSTracker class
     GPSTracker gps;
 
@@ -119,13 +120,13 @@ public class LauncherActivity extends Activity {
             public boolean onMarkerClick(Marker marker) {
 
                 //Make API call to neem service. Currently marker value hardcoded
-                String boothId = markers.get(marker);
-                new UpdateBoothId().execute("createPerson", deviceId, "Bangalore", String.valueOf(latitude), String.valueOf(longitude), boothId);
+                myBoothId = markers.get(marker);
+                new UpdateBoothId().execute("createPerson", deviceId, "Bangalore", String.valueOf(latitude), String.valueOf(longitude), myBoothId);
                 bottomLayout.setVisibility(View.GONE);
                 Toast.makeText(getApplicationContext(), "Thanks for choosing your booth!", Toast.LENGTH_LONG).show();
 
                 editor = sharedPreferences.edit();
-                editor.putString("boothId", boothId);
+                editor.putString("boothId", myBoothId);
                 editor.commit();
 
                 //Calling booth activity
@@ -236,6 +237,7 @@ public class LauncherActivity extends Activity {
             editor = sharedPreferences.edit();
             editor.remove("boothId");
             editor.commit();
+            new DeleteBoothId().execute("deletePerson", myRowId);
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -252,7 +254,7 @@ public class LauncherActivity extends Activity {
             super.onPreExecute();
             // Showing progress dialog
             pDialog = new ProgressDialog(LauncherActivity.this);
-            pDialog.setMessage("Please wait...");
+            pDialog.setMessage("Updating your booth ID, Please wait...");
             pDialog.setCancelable(false);
             pDialog.show();
 
@@ -273,7 +275,9 @@ public class LauncherActivity extends Activity {
             if (jsonStr != null) {
                 try {
                     JSONObject jsonObj = new JSONObject(jsonStr);
-
+                    JSONArray result = jsonObj.getJSONArray("Result");
+                    myRowId = result.getJSONObject(0).getString("RowId");
+                    Log.d("RowId", myRowId);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -282,6 +286,60 @@ public class LauncherActivity extends Activity {
             }
 
             return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
+            // Dismiss the progress dialog
+            if (pDialog.isShowing())
+                pDialog.dismiss();
+
+        }
+
+    }
+
+    private class DeleteBoothId extends AsyncTask<String, Void, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            // Showing progress dialog
+            pDialog = new ProgressDialog(LauncherActivity.this);
+            pDialog.setMessage("Clearing your booth ID, Please wait...");
+            pDialog.setCancelable(false);
+            pDialog.show();
+
+        }
+
+        @Override
+        protected Void doInBackground(String... params) {
+
+            if (params[1] == null) {
+                Log.d("RowId", "IS NULL");
+                return null;
+            }
+
+            // Creating service handler class instance
+            ServiceHandler sh = new ServiceHandler();
+
+            // Making a request to url and getting response
+            String jsonStr = sh.makeServiceCall(AppConstants.SERVER_BASE_URL + "&method=" + params[0] + "&RowId=" + params[1] +
+                    "&format=json"
+                    , ServiceHandler.GET);
+
+            Log.d("Response: ", "> " + jsonStr);
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
+            // Dismiss the progress dialog
+            if (pDialog.isShowing())
+                pDialog.dismiss();
+
         }
     }
 
@@ -292,7 +350,7 @@ public class LauncherActivity extends Activity {
             super.onPreExecute();
             // Showing progress dialog
             pDialog = new ProgressDialog(LauncherActivity.this);
-            pDialog.setMessage("Please wait...");
+            pDialog.setMessage("Fetching nearby booths, please wait...");
             pDialog.setCancelable(false);
             pDialog.show();
         }
