@@ -16,10 +16,10 @@ android {
 
             release {
 
-                storeFile file('droidboosters.keystore')
-                storePassword "droidboosters"
-                keyAlias "alias"
-                keyPassword "droidboosters"
+                storeFile file('')
+                storePassword ""
+                keyAlias ""
+                keyPassword ""
             }
         }
 
