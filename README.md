@@ -2,6 +2,7 @@ VoteNow
 =======
 
 Hack to make the people of India to vote! 
+Made at Hackathon from Venturesity at Microsoft Accelerator, Bangalore office
 
 Team Members :
 ---------------
